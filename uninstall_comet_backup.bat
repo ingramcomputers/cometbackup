@@ -1,0 +1,1 @@
+"C:\Program Files\IT Backup\Uninstall.exe" /S /ISDELETECREDENTIAL=yes
