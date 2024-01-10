@@ -1,0 +1,47 @@
+# This will upgrade the Comet Backup Agent from your server.
+# Setup will use your current settings.
+# Be sure to edit the domain and file names if needed.
+---
+- hosts: monitor
+  become: true
+  tasks:
+
+  - name: Create /opt if it does not exist
+    file:
+      path: /opt
+      state: directory
+      mode: '0755'
+
+  - name: 'https://backup.yourdomain.com/api/v1/admin/branding/generate-client/by-platform'
+    uri:
+      url: 'https://backup.yourdomain.com/api/v1/admin/branding/generate-client/by-platform'
+      dest: /opt/CometBackup.run
+      method: POST
+      body:
+        SelfAddress: 'https://backup.yourdomain.com/'
+        Platform: '7'
+      body_format: form-urlencoded
+      headers:
+        Content-Type: application/x-www-form-urlencoded
+    register: result
+
+  - name: Set execute permission on file
+    file:
+      path: /opt/CometBackup.run
+      state: file
+      mode: '0755'
+  - name: Run Comet Upgrade
+    ansible.builtin.command: /opt/CometBackup.run
+
+  - name: Recreating The Startup Script because Synology is weird sometimes
+    copy:
+      dest: "/usr/local/etc/rc.d/comet.sh"
+      content: |
+        #!/bin/bash
+        /opt/CometBackup/backup-daemon-start-background.sh
+
+  - name: Set execute on startup script
+    file:
+      path: /usr/local/etc/rc.d/comet.sh
+      state: file
+      mode: '0755'
